@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Brush</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      background: #f9f9f9;
+      cursor: crosshair;
+    }
+    .toolbar {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .toolbar button {
+      margin: 0 5px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="setCategory('cat')">Cat</button>
+  <button onclick="setCategory('dog')">Dog</button>
+  <button onclick="setCategory('phone')">Phone</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const accessKey = "zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg";
+let images = [];
+let currentImage = 0;
+let currentQuery = "cat";
+
+// Setup canvas
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+// Fetch images from Unsplash
+async function fetchImages(query) {
+  currentQuery = query;
+  const url = `https://api.unsplash.com/search/photos?page=1&query=${query}&client_id=${accessKey}&per_page=30`;
+  const res = await fetch(url);
+  const data = await res.json();
+  images = data.results.map(r => r.urls.small);
+  currentImage = 0;
+}
+
+// Draw an image at (x, y)
+function drawImageAt(x, y) {
+  if (images.length === 0) return;
+
+  const img = new Image();
+  img.src = images[currentImage];
+  currentImage = (currentImage + 1) % images.length;
+
+  img.onload = () => {
+    const size = 80;
+    ctx.drawImage(img, x - size/2, y - size/2, size, size);
+  };
+}
+
+// Brush behavior
+let drawing = false;
+canvas.addEventListener('mousedown', e => {
+  drawing = true;
+  drawImageAt(e.clientX, e.clientY);
+});
+canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('mousemove', e => {
+  if (drawing) {
+    drawImageAt(e.clientX, e.clientY);
+  }
+});
+
+// Change category
+function setCategory(query) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  fetchImages(query);
+}
+
+fetchImages(currentQuery); // Initial load
+</script>
+</body>
+</html>
