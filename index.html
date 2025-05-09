@@ -89,11 +89,19 @@ function drawImageAt(x, y) {
 // Brush behavior
 let drawing = false;
 canvas.addEventListener('mousedown', e => {
+  stopAutoDraw();
+  resetInactivityTimer();
   drawing = true;
   drawImageAt(e.clientX, e.clientY);
 });
-canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('mouseup', () => {
+  stopAutoDraw();
+  resetInactivityTimer();
+  drawing = false;
+});
 canvas.addEventListener('mousemove', e => {
+  stopAutoDraw();
+  resetInactivityTimer();
   if (drawing) {
     drawImageAt(e.clientX, e.clientY);
   }
@@ -101,11 +109,42 @@ canvas.addEventListener('mousemove', e => {
 
 // Change category
 function setCategory(query) {
+  stopAutoDraw();
+  resetInactivityTimer();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   fetchImages(query);
 }
 
 fetchImages(currentQuery); // Initial load
+
+// --- Idle Detection and Auto-Draw ---
+let inactivityTimer = null;
+let autoDrawInterval = null;
+
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(startAutoDraw, 3000);
+}
+
+function startAutoDraw() {
+  if (autoDrawInterval) return; // already running
+  autoDrawInterval = setInterval(() => {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    drawImageAt(x, y);
+  }, 1000);
+}
+
+function stopAutoDraw() {
+  if (autoDrawInterval) {
+    clearInterval(autoDrawInterval);
+    autoDrawInterval = null;
+  }
+}
+
+// Initial idle timer
+resetInactivityTimer();
 </script>
+
 </body>
 </html>
